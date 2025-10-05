@@ -1,67 +1,59 @@
-# Interceptar Respuestas con BurpSuite
+# Codificación y Decodificación en Burp Suite y ZAP
 
-## Objetivo
-En algunos casos, necesitamos **interceptar las respuestas HTTP del servidor** antes de que lleguen al navegador. Esto es útil para:
-- Cambiar la apariencia de una página web específica.
-- Habilitar campos deshabilitados u ocultos.
-- Modificar formularios para permitir mayor control en pruebas de penetración.
+## Importancia
+Al modificar y enviar solicitudes HTTP personalizadas, a menudo es necesario **codificar** y **decodificar** datos para que el servidor web los interprete correctamente.
 
----
+## Codificación de URL
+Es crucial que los datos de la solicitud estén **codificados en URL** y los encabezados configurados adecuadamente.  
+Si no se codifican:
+- Los **espacios** pueden interpretarse como fin de datos.
+- El carácter **&** como delimitador de parámetros.
+- El carácter **#** como identificador de fragmento.
 
-## Pasos para Interceptar Respuestas en BurpSuite
+### Cómo codificar en Burp Suite
+- Seleccionar texto → clic derecho → `Convert Selection > URL > URL-encode key characters`.
+- O usar atajo **CTRL+U**.
+- También se puede habilitar la opción para codificar automáticamente mientras se escribe.
 
-### 1. Habilitar Interceptación de Respuestas
-1. Abrir **BurpSuite**.
-2. Ir a **Proxy > Proxy settings**.
-3. Activar la opción **Intercept Response** en *Response interception rules*.
-4. Asegurarse de marcar también la opción para actualizar el encabezado `Content-Length` si se requiere.
+> En ZAP, los datos de la solicitud suelen codificarse automáticamente en segundo plano.
 
----
+Existen otros métodos como **Full URL-Encoding** o **Unicode URL**, útiles para caracteres especiales.
 
-### 2. Interceptar y Editar
-1. Habilitar de nuevo la **interceptación de solicitudes**.
-2. Actualizar la página en el navegador con **CTRL + SHIFT + R** para forzar una recarga completa.
-3. Cuando Burp capture la **solicitud**, hacer clic en **Forward**.
-4. Veremos la **respuesta interceptada** en Burp.
+## Decodificación
+Las aplicaciones web a menudo **codifican datos** que necesitamos **decodificar** para entender su contenido.  
+Algunos formatos comunes:
+- HTML
+- Unicode
+- Base64
+- ASCII Hex
 
----
+### Cómo decodificar
+- En **Burp Suite**: pestaña **Decoder**, pegar el texto y elegir `Decode as > [tipo]`.
+- En **ZAP**: usar `Encoder/Decoder/Hash` con atajo **CTRL+E**.
 
-### 3. Ejemplo Práctico
-- Originalmente, un formulario solo permitía valores numéricos en el campo IP:
-
-```html
-<input type="number" id="ip" name="ip" min="1" max="255" maxlength="3"
-    oninput="javascript: if (this.value.length > this.maxLength) 
-    this.value = this.value.slice(0, this.maxLength);" required>
+#### Ejemplo práctico
+Cookie en **Base64**:
+```
+eyJ1c2VybmFtZSI6Imd1ZXN0IiwgImlzX2FkbWluIjpmYWxzZX0=
+```
+Decodificada muestra:
+```json
+{"username":"guest","is_admin":false}
 ```
 
-- Modificamos el campo para aceptar texto y mayor longitud:
-
-```html
-<input type="text" id="ip" name="ip" min="1" max="255" maxlength="100"
-    oninput="javascript: if (this.value.length > this.maxLength) 
-    this.value = this.value.slice(0, this.maxLength);" required>
+Podemos modificar el valor y recodificarlo para pruebas de escalación de privilegios:
+```json
+{"username":"admin","is_admin":true}
 ```
 
-5. Presionar **Forward** nuevamente.
-6. Regresar al navegador y verificar el cambio aplicado: ahora el campo permite cualquier valor.
+## Inspector de Burp
+Burp incluye la herramienta **Inspector**, disponible en **Proxy** o **Repeater**, que permite codificar y decodificar directamente las solicitudes y respuestas.
 
----
+## Consejos
+- Crear pestañas personalizadas en el codificador/decodificador de ZAP con `Agregar nueva pestaña`.
+- En Burp, se puede re-codificar la **salida decodificada** usando otro método de codificación.
 
-## Ejercicio Sugerido
-- Usar la misma técnica para habilitar un botón HTML deshabilitado.
-- Insertar la carga útil directamente desde el navegador una vez modificado el formulario.
-
----
-
-## Otras Opciones
-- Burp incluye en **Proxy > Proxy settings > Response modification rules** opciones como **Unhide hidden form fields** para habilitar automáticamente campos ocultos.
-- También es posible mostrar los **comentarios HTML** en las páginas para descubrir pistas adicionales.
-
----
-
-## ZAP HUD (Alternativa)
-- ZAP permite interceptar solicitudes y respuestas de forma similar a Burp.
-- Al interceptar, podemos usar el botón **Step** para enviar la solicitud e interceptar la respuesta.
-- El **botón de bombilla** permite habilitar campos deshabilitados u ocultos sin interceptar manualmente.
-- También cuenta con la función **Comments** para revelar comentarios ocultos en el código fuente.
+## Resumen
+- **Codificar URL** evita errores en solicitudes HTTP.
+- **Decodificar datos** revela contenido oculto, útil para pruebas de penetración.
+- Permite modificar valores sensibles (como cookies) y recodificarlos para nuevos intentos.
