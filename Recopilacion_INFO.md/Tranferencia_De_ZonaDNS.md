@@ -38,7 +38,7 @@ Si el servidor autoritativo permite AXFR a **cualquiera**, un tercero puede desc
 ### 1) `dig` (recomendado)
 ```bash
 # Sintaxis general
-dig axfr @<ns_autoritativo> <dominio>
+dig axfr @<ns_autoritativo IP> <dominio>
 
 # Ejemplo de demostración pública
 dig axfr @nsztm1.digi.ninja zonetransfer.me
